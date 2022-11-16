@@ -14,7 +14,7 @@ parser.add_argument('--max_iter', type=int,  default=1, help='max # iterations')
 parser.add_argument('--data_path', default='./', help='max # iterations')
 args   = parser.parse_args()
 
-# verfiy input arguments 
+# verfiy input arguments
 assert args.interaction in ['cat', 'dot']
 assert os.path.isdir(args.data_path + 'criteo')
 
@@ -33,7 +33,7 @@ train_dataset = Dataset.from_tensor_slices({
                     'sparse_features': raw_data['X_cat_train'][:batch_size*1000],
                     'label': raw_data['y_train'][:batch_size*1000]
                 }).batch(batch_size).prefetch(1).shuffle(5*batch_size)
-    
+
 # Sample 100 batches for validation
 val_dataset = Dataset.from_tensor_slices({
                     'dense_features': raw_data['X_int_val'][:batch_size*100],
@@ -68,17 +68,17 @@ def eval_step(dense_features, sparse_features, label):
 average_loss = tf.keras.metrics.Mean()
 
 for train_iter, batch_data in enumerate(train_dataset):
-    
+
     loss = train_step(**batch_data)
     average_loss.update_state(loss)
     print('%d iter training.' % train_iter, end='\r')
-    
+
     if train_iter % eval_interval == 0:
         for eval_batch_data in tqdm(val_dataset,
-                                    leave=False, 
+                                    leave=False,
                                     desc='%d iter evaluation' % train_iter):
             eval_step(**eval_batch_data)
-        print("Iter: %d, Loss: %.2f, AUC: %.4f" % (train_iter, 
+        print("Iter: %d, Loss: %.2f, AUC: %.4f" % (train_iter,
                                                    average_loss.result().numpy(),
                                                    auc.result().numpy()))
         average_loss.reset_states()
