@@ -1,11 +1,24 @@
+import sys
+import os
 from tensorflow.data import Dataset
 from noddlrm.recommenders import DLRM
 from tensorflow.keras import optimizers
 from tqdm import tqdm
 import tensorflow as tf
 import dataloader
+import argparse
 
-raw_data = dataloader.load_criteo('../dataset/')
+parser = argparse.ArgumentParser()
+parser.add_argument('--interaction', default='dot', help='interaction type [dot|cat]')
+parser.add_argument('--max_iter', type=int,  default=1, help='max # iterations')
+parser.add_argument('--data_path', default='./', help='max # iterations')
+args   = parser.parse_args()
+
+# verfiy input arguments 
+assert args.interaction in ['cat', 'dot']
+assert os.path.isdir(args.data_path + 'criteo')
+
+raw_data = dataloader.load_criteo(args.data_path)
 dim_embed = 4
 bottom_mlp_size = [8, 4]
 top_mlp_size = [128, 64, 1]
@@ -30,12 +43,12 @@ val_dataset = Dataset.from_tensor_slices({
 
 optimizer = optimizers.Adam()
 
-dlrm_model = DLRM(
-                m_spa=dim_embed,
-                ln_emb=raw_data['counts'],
-                ln_bot=bottom_mlp_size,
-                ln_top=top_mlp_size
-             )
+output_dir = './dlrm_I{}'.format(args.interaction)
+dlrm_model = DLRM(m_spa=dim_embed,
+                  ln_emb=raw_data['counts'],
+                  ln_bot=bottom_mlp_size,
+                  ln_top=top_mlp_size,
+                  arch_interaction_op=args.interaction)
 
 auc = tf.keras.metrics.AUC()
 
@@ -70,5 +83,7 @@ for train_iter, batch_data in enumerate(train_dataset):
                                                    auc.result().numpy()))
         average_loss.reset_states()
         auc.reset_states()
+    if train_iter >= args.max_iter:
+        break;
 
 dlrm_model.save('DLRMModel_tf2_2')
