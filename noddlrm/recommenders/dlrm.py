@@ -81,7 +81,7 @@ class DLRM(Model):
 
         '''
         dense_features shape: [batch_size, num of dense features]
-        sparse_features shape: [num_of_sparse_features, batch_size]
+        sparse_features shape: [batch_size, num_of_sparse_features]
         '''
         self._set_inputs([dense_features, sparse_features])
         sparse_emb_vecs = list(map(lambda pair: pair[1](pair[0]),
